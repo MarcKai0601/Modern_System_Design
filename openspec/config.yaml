@@ -1,0 +1,30 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+context: |
+  Language: Traditional Chinese (zh-TW)
+  All artifacts (proposals, specs, design, tasks) must be written in Traditional Chinese.
+  Write in Traditional Chinese, but keep technical terms (e.g., "API", "ESM", "CLI") in English.
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+rules:
+  specs:
+    - 使用 BDD (Given/When/Then) 格式撰寫場景
+  proposal:
+    - 確保提案包含「目標」與「非目標」章節
+  tasks:
+     - 將任務拆解為每個步驟不超過 2 小時的工作量
