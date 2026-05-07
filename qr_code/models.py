@@ -9,6 +9,8 @@ from datetime import datetime
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+# Python 沒有 Java 的 `public static final`，習慣上用「全大寫名稱」表示常數。
+# 這些是模組層級（module-level）的變數，相當於 Java 的 static field。
 
 BASE62_ALPHABET: str = string.ascii_uppercase + string.ascii_lowercase + string.digits
 
@@ -32,10 +34,22 @@ QR_BORDER: int = 4      # quiet zone width in modules (spec minimum is 4)
 # ---------------------------------------------------------------------------
 # Data Models
 # ---------------------------------------------------------------------------
+# @dataclass 是 Python 的自動生成器（類似 Java 的 Lombok @Data 或 Java 16+ record）。
+# 它會自動產生 __init__（建構子）、__repr__（toString）、__eq__（equals）。
+# 你只需要宣告欄位名稱和型別，不用手寫 getter/setter（Python 預設欄位可直接存取）。
 
 @dataclass
 class User:
+    # 型別標注（Type Hint）：str、datetime 等。
+    # 這在 Python 是選擇性的，執行時不會強制檢查（不像 Java 的編譯時型別）。
+    # 但有了標注，IDE 和 mypy 等工具可以做靜態分析。
     user_id: str
+
+    # field(default_factory=...) 的作用：
+    # 如果寫成 created_at: datetime = datetime.utcnow()，Python 只會在
+    # 「定義類別時」呼叫一次 utcnow()，所有實例共用同一個時間 — 這是個陷阱。
+    # default_factory 讓每次建立新實例時才呼叫，等同於 Java 在建構子裡寫
+    # this.createdAt = LocalDateTime.now();
     created_at: datetime = field(default_factory=datetime.utcnow)
     # Production: PostgreSQL `users` table
     #   user_id    VARCHAR PRIMARY KEY  (or UUID)
@@ -60,6 +74,10 @@ class QRCodeRecord:
 # ---------------------------------------------------------------------------
 # Exceptions
 # ---------------------------------------------------------------------------
+# Python 的例外繼承寫法和 Java 相同：class Child(Parent)。
+# 關鍵差異：Python 所有例外都是「非受檢例外」（unchecked），
+# 不需要像 Java 的受檢例外（checked exception）在方法簽名加 throws。
+# 建立自訂例外階層的目的是讓 API 層可以用 except SpecificError 精確捕捉。
 
 class QRCodeError(Exception):
     """Base exception for all QR code service errors."""

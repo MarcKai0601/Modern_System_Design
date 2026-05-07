@@ -129,6 +129,22 @@ class QRCodeService:
             raise QRCodeNotFoundError(f"QR code '{qr_id}' not found.")
         self.storage.delete_qr_code(qr_id, user_id)
 
+    def get_qr_record(self, user_id: str, qr_id: str) -> QRCodeRecord:
+        """Fetch a single QR code record, verifying ownership."""
+        record = self.storage.get_qr_code(qr_id)
+        if record is None or record.user_id != user_id:
+            raise QRCodeNotFoundError(f"QR code '{qr_id}' not found.")
+        return record
+
+    def get_qr_image(self, user_id: str, qr_id: str) -> bytes:
+        """Regenerate the PNG for an existing QR code record.
+
+        QR codes are deterministic: same redirect_url always produces the same image,
+        so there is no need to store the image bytes — just regenerate on demand.
+        """
+        record = self.get_qr_record(user_id, qr_id)
+        return self.qr_generator.generate(record.redirect_url)
+
     def resolve_redirect(self, qr_id: str) -> str:
         """
         The hot path. Must complete in < 100 ms end-to-end in production.

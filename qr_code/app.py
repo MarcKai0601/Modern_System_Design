@@ -3,9 +3,14 @@ FastAPI application: route handlers for the QR Code service.
 """
 
 from fastapi import FastAPI, HTTPException, Response
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-from .models import DuplicateURLError, QRCodeNotFoundError, URLValidationError, UserNotFoundError
+from .models import (
+    DuplicateURLError,
+    QRCodeNotFoundError,
+    URLValidationError,
+    UserNotFoundError,
+)
 from .service import QRCodeGenerator, QRCodeService
 from .storage import InMemoryStorage
 
@@ -103,6 +108,108 @@ def delete_qr_code(user_id: str, qr_id: str) -> Response:
         raise HTTPException(status_code=404, detail=str(e))
 
     return Response(status_code=204)
+
+
+@app.get(
+    "/api/users/{user_id}/qr-codes/{qr_id}/image",
+    status_code=200,
+    summary="Get QR code as PNG image",
+    response_class=Response,
+)
+def get_qr_image(user_id: str, qr_id: str) -> Response:
+    """
+    Returns the QR code as a PNG image.
+    Used as the `src` of the `<img>` tag in the view page.
+
+    - **200 OK**: PNG image.
+    - **404 Not Found**: QR code not found.
+    """
+    try:
+        image_bytes = _service.get_qr_image(user_id, qr_id)
+    except QRCodeNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return Response(content=image_bytes, media_type="image/png")
+
+
+@app.get(
+    "/api/users/{user_id}/qr-codes/{qr_id}/view",
+    status_code=200,
+    summary="View QR code in browser — scan-ready page",
+    response_class=HTMLResponse,
+)
+def view_qr_code(user_id: str, qr_id: str) -> HTMLResponse:
+    """
+    Returns an HTML page showing the QR code image for scanning.
+
+    - **200 OK**: HTML page with the QR code.
+    - **404 Not Found**: QR code not found.
+    """
+    try:
+        record = _service.get_qr_record(user_id, qr_id)
+    except QRCodeNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    image_url = f"/api/users/{user_id}/qr-codes/{qr_id}/image"
+    html = f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code — {record.qr_id}</title>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }}
+    .card {{
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 2rem;
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+    }}
+    h1 {{ font-size: 1rem; color: #888; font-weight: 500; margin-bottom: 1.5rem; letter-spacing: 0.05em; }}
+    img {{ width: 100%; max-width: 280px; border-radius: 8px; border: 1px solid #eee; }}
+    .url {{
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+      color: #333;
+      word-break: break-all;
+      font-weight: 500;
+    }}
+    .hint {{ margin-top: 0.4rem; font-size: 0.78rem; color: #aaa; }}
+    .badge {{
+      display: inline-block;
+      margin-top: 1.25rem;
+      background: #f5f5f5;
+      color: #888;
+      font-size: 0.72rem;
+      font-family: monospace;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+    }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>掃描 QR Code</h1>
+    <img src="{image_url}" alt="QR Code for {record.original_url}">
+    <p class="url">{record.original_url}</p>
+    <p class="hint">掃描後將跳轉至以上網址</p>
+    <span class="badge">ID: {record.qr_id}</span>
+  </div>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
 
 
 @app.get(

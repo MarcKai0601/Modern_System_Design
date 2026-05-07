@@ -12,6 +12,8 @@ A hands-on learning project where each system design topic is implemented as a s
 Modern_System_Design/
 ├── main.py              # 啟動入口 / Project launcher
 ├── requirements.txt     # 依賴套件 / Dependencies
+├── docs/
+│   └── python-for-java-devs.md  # Python 語法對照文件（給 Java 開發者）
 ├── qr_code/             # 題目一：QR Code 產生器 / Topic 1: QR Code Generator
 │   ├── __init__.py
 │   ├── models.py        # 資料模型、常數、例外 / Data models, constants, exceptions
@@ -61,23 +63,27 @@ python main.py
 
 ### QR Code Generator
 
-| Method   | Path                                    | Status | 說明 / Description           |
-|----------|-----------------------------------------|--------|------------------------------|
-| `POST`   | `/api/users/{user_id}/qr-codes?url=...` | 201    | 產生 QR Code PNG / Create QR code |
-| `GET`    | `/api/users/{user_id}/qr-codes`         | 200    | 列出所有 QR Code / List QR codes |
-| `DELETE` | `/api/users/{user_id}/qr-codes/{qr_id}` | 204    | 刪除 QR Code / Delete QR code |
-| `GET`    | `/{qr_id}`                              | 307    | 掃描後跳轉（熱路徑）/ Redirect on scan (hot path) |
+| Method   | Path                                          | Status | 說明 / Description                        |
+|----------|-----------------------------------------------|--------|-------------------------------------------|
+| `POST`   | `/api/users/{user_id}/qr-codes?url=...`       | 201    | 產生 QR Code / Create QR code             |
+| `GET`    | `/api/users/{user_id}/qr-codes`               | 200    | 列出所有 QR Code / List QR codes          |
+| `GET`    | `/api/users/{user_id}/qr-codes/{qr_id}/view`  | 200    | **瀏覽器掃描頁面 / Scan page** (HTML)    |
+| `GET`    | `/api/users/{user_id}/qr-codes/{qr_id}/image` | 200    | QR Code 圖片 / QR Code image (PNG)        |
+| `DELETE` | `/api/users/{user_id}/qr-codes/{qr_id}`       | 204    | 刪除 QR Code / Delete QR code             |
+| `GET`    | `/{qr_id}`                                    | 307    | 掃描後跳轉（熱路徑）/ Redirect on scan   |
 
 **URL 規則 / URL rules：** ASCII 字元，最多 20 字元。
 
 **快速測試 / Quick test：**
 
 ```bash
-# 產生 QR Code（儲存為 PNG）/ Create QR code (saves as PNG)
-curl -X POST "http://localhost:8000/api/users/alice/qr-codes?url=http://example.com" \
-     --output qr.png
+# 1. 產生 QR Code / Create QR code
+curl -X POST "http://localhost:8000/api/users/alice/qr-codes?url=http://example.com"
 
-# 列出 QR Codes / List QR codes
+# 2. 在瀏覽器開啟掃描頁面 / Open scan page in browser（將 {qr_id} 換成回傳的 ID）
+open "http://localhost:8000/api/users/alice/qr-codes/{qr_id}/view"
+
+# 3. 列出所有 QR Codes / List QR codes
 curl http://localhost:8000/api/users/alice/qr-codes
 ```
 
